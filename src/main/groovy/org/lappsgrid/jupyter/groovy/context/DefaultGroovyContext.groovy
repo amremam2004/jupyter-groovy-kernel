@@ -19,6 +19,8 @@ package org.lappsgrid.jupyter.groovy.context
 
 import org.codehaus.groovy.control.CompilerConfiguration
 
+//import org.lappsgrid.jupyter.groovy.context.GroovyContext
+
 /**
  * The DefaultGroovyContext implements the GroovyContext interface and returns default
  * CompilerConfiguration and ExpandoMetaClass objects.

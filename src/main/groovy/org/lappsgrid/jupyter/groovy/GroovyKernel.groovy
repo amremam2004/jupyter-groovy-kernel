@@ -33,6 +33,10 @@ import org.lappsgrid.jupyter.groovy.threads.ControlThread
 import org.lappsgrid.jupyter.groovy.threads.HeartbeatThread
 import org.lappsgrid.jupyter.groovy.threads.ShellThread
 import org.lappsgrid.jupyter.groovy.threads.StdinThread
+
+import org.lappsgrid.jupyter.groovy.output.OutPublisher
+import org.lappsgrid.jupyter.groovy.output.OutWriter
+
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.zeromq.ZMQ
@@ -41,14 +45,14 @@ import java.security.InvalidKeyException
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
-import static Message.Type.*
+import static org.lappsgrid.jupyter.groovy.msg.Message.Type.*
 
 /**
  * The entry point for the Jupyter kernel.
  *
  * @author Keith Suderman
  */
-class GroovyKernel {
+class GroovyKernel implements OutPublisher{
     private static final Logger logger = LoggerFactory.getLogger(GroovyKernel)
 
     /** The timezone to use when generating time stamps. */
@@ -81,6 +85,7 @@ class GroovyKernel {
     ZMQ.Socket shellSocket
     ZMQ.Socket iopubSocket
     ZMQ.Socket stdinSocket
+	ZMQ.Context zmqContext
 
     public GroovyKernel() {
         this(new DefaultGroovyContext())
@@ -134,6 +139,15 @@ class GroovyKernel {
         ]
     }
 
+
+	Message lastMessage;
+	void setLastMessage(Message message){
+	    lastMessage=message;
+	}
+    Message getLastMessage(){
+    	return lastMessage;
+    }
+	
     void shutdown() {
         running = false
     }
@@ -310,7 +324,7 @@ class GroovyKernel {
         while (running) {
             // Nothing to do but navel gaze until another thread sets
             // running == false
-            Thread.sleep(1000)
+            Thread.sleep(200)
         }
 
         // Signal all threads that it is time to stop and then wait for

@@ -24,6 +24,10 @@ import org.lappsgrid.jupyter.groovy.msg.Header
 import org.lappsgrid.jupyter.groovy.msg.Message
 import org.slf4j.LoggerFactory
 import org.zeromq.ZMQ
+import org.lappsgrid.jupyter.groovy.output.OutWriter
+import java.io.PrintStream;
+import org.codehaus.groovy.tools.shell.util.ScriptVariableAnalyzer
+import org.codehaus.groovy.tools.shell.Parser
 
 import static Message.Type.*
 
@@ -38,6 +42,7 @@ class ExecuteHandler extends AbstractHandler {
     Binding binding
     GroovyShell compiler
     Set<String> included
+    public static final String COLLECTED_BOUND_VARS_MAP_VARNAME = 'groovysh_collected_boundvars'
 
     public ExecuteHandler(GroovyKernel kernel) {
         super(kernel)
@@ -45,12 +50,23 @@ class ExecuteHandler extends AbstractHandler {
         executionCount = 0
         binding = new Binding()
         binding.setVariable('version', version())
+        PrintStream ps=OutWriter.CreateWriter(kernel)
+        binding.setProperty("out", ps)
+        binding.setVariable("toOut", ps)
+        
         CompilerConfiguration configuration = kernel.context.getCompilerConfiguration()
         compiler = new GroovyShell(this.class.classLoader, binding, configuration)
+        compiler.evaluate("""
+            System.setOut(toOut);
+            System.setErr(toOut);
+            """);
+            
+            
     }
 
     //TODO some security would be nice!
     void handle(Message message) {
+    	kernel.setLastMessage(message);
         logger.info("Processing execute request")
         Message reply = new Message()
         reply.content = [ execution_state: 'busy' ]
@@ -112,7 +128,58 @@ class ExecuteHandler extends AbstractHandler {
             meta.initialize()
             script.metaClass = meta
             logger.trace("code compiled")
-            Object result = script.run()
+            
+            
+            /*  */
+        Object result
+        String variableBlocks = ''
+        // To make groovysh behave more like an interpreter, we need to retrive all bound
+        // vars at the end of script execution, and then update them into the groovysh Binding context.
+        
+        Set<String> boundVars = ScriptVariableAnalyzer.getBoundVars(code)
+        variableBlocks += "$COLLECTED_BOUND_VARS_MAP_VARNAME = new HashMap();"
+        if (boundVars) {
+            boundVars.each({ String varname ->
+                // bound vars can be in global or some local scope.
+                // We discard locally scoped vars by ignoring MissingPropertyException
+                variableBlocks += """
+				try {$COLLECTED_BOUND_VARS_MAP_VARNAME[\"$varname\"] = $varname;
+				} catch (MissingPropertyException e){}"""
+				            })
+        }
+		
+        // Evaluate the current buffer w/imports and dummy statement
+        
+        List<String> buff = /*imports +*/ ['try {', 'true'] + code + ['} finally {' + variableBlocks + '}']
+
+        //setLastResult(
+        result = compiler.evaluate(buff.join(Parser.NEWLINE))
+        //)
+
+        Map<String, Object> boundVarValues = compiler.context.getVariable(COLLECTED_BOUND_VARS_MAP_VARNAME)
+        boundVarValues.each({ String name, Object value -> compiler.context.setVariable(name, value) })
+        
+        //return result
+               
+            
+            
+            
+            
+            
+            
+            /* **/
+            
+            
+            
+            //result = script.run()
+            
+            
+            
+            
+            
+            
+            
+            
             logger.trace("Ran script")
             if (!result) {
                 result = 'Cell returned null.'

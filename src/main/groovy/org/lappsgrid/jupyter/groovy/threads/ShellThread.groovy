@@ -51,7 +51,7 @@ class ShellThread extends AbstractThread {
                 }
                 else {
                     logger.trace("zzzz")
-                    sleep(1000) {
+                    sleep(200) {
                         true
                     }
                 }

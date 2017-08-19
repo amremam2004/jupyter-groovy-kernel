@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>parent-pom</artifactId>
@@ -35,6 +34,7 @@
         <ivy.version>2.4.0</ivy.version>
     </properties>
     <build>
+    <pluginManagement>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -124,7 +124,38 @@
                     <destinationDirectory>${project.reporting.outputDirectory}/groovydoc</destinationDirectory>
                 </configuration>
             </plugin>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+            	<groupId>org.eclipse.m2e</groupId>
+            	<artifactId>lifecycle-mapping</artifactId>
+            	<version>1.0.0</version>
+            	<configuration>
+            		<lifecycleMappingMetadata>
+            			<pluginExecutions>
+            				<pluginExecution>
+            					<pluginExecutionFilter>
+            						<groupId>
+            							org.apache.maven.plugins
+            						</groupId>
+            						<artifactId>
+            							maven-resources-plugin
+            						</artifactId>
+            						<versionRange>[2.6,)</versionRange>
+            						<goals>
+            							<goal>testResources</goal>
+            							<goal>resources</goal>
+            						</goals>
+            					</pluginExecutionFilter>
+            					<action>
+            						<ignore></ignore>
+            					</action>
+            				</pluginExecution>
+            			</pluginExecutions>
+            		</lifecycleMappingMetadata>
+            	</configuration>
+            </plugin>
         </plugins>
+    </pluginManagement>
     </build>
     <dependencies>
         <dependency>
@@ -172,6 +203,22 @@
             <artifactId>jackson-core</artifactId>
             <version>2.5.1</version>
         </dependency>
+<dependency>
+    <groupId>org.fusesource.jansi</groupId>
+    <artifactId>jansi</artifactId>
+    <version>1.16</version>
+</dependency>
+<dependency>
+    <groupId>jline</groupId>
+    <artifactId>jline</artifactId>
+    <version>2.14.3</version>
+</dependency>
+ <dependency>
+    <groupId>commons-io</groupId>
+    <artifactId>commons-io</artifactId>
+    <version>2.5</version>
+</dependency>
+
     </dependencies>
     <reporting>
         <plugins>
